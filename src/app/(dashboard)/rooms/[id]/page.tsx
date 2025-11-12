@@ -1,11 +1,24 @@
 "use client"
-
+import React from "react"
 import { Button } from "@/components/ui/button"
 import { useRouter, useParams } from "next/navigation"
-import { ArrowLeft, Users, Calendar, Check, AlertCircle, ChevronLeft, ChevronRight } from "lucide-react"
+import { ArrowLeft, Users, Calendar, Check, AlertCircle, ChevronLeft, ChevronRight, Phone, User } from "lucide-react"
 import { useState, useMemo } from "react"
 import { typography } from "@/styles/typography"
-import type { RoomDetail } from "@/types"
+import { console } from "inspector"
+
+interface RoomDetail {
+    id: string
+    name: string
+    description: string
+    capacity: number
+    image: string
+    features: string[]
+    status: "available" | "unavailable"
+    longDescription: string
+    pricePerHour: number
+    availableSlots: string[]
+}
 
 const MOCK_ROOM: RoomDetail = {
     id: "",
@@ -29,15 +42,14 @@ const WEEKDAYS = ["Sun", "Mon", "Tue", "Wed", "Thu", "Fri", "Sat"]
 const WEEKDAYS_FULL = ["Sunday", "Monday", "Tuesday", "Wednesday", "Thursday", "Friday", "Saturday"]
 const WORKING_DAYS = [1, 2, 3, 4, 5]
 
-// Utilities
-const isWorkingDay = (date: Date) => WORKING_DAYS.includes(date.getDay())
-const formatDate = (date: Date) => {
+const isWorkingDay = (date: Date): boolean => WORKING_DAYS.includes(date.getDay())
+const formatDate = (date: Date): string => {
     const y = date.getFullYear(), m = String(date.getMonth() + 1).padStart(2, "0"), d = String(date.getDate()).padStart(2, "0")
     return `${y}-${m}-${d}`
 }
-const getDaysInMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
-const getFirstDayOfMonth = (date: Date) => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
-const getMinDate = () => {
+const getDaysInMonth = (date: Date): number => new Date(date.getFullYear(), date.getMonth() + 1, 0).getDate()
+const getFirstDayOfMonth = (date: Date): number => new Date(date.getFullYear(), date.getMonth(), 1).getDay()
+const getMinDate = (): string => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     if (isWorkingDay(today)) return formatDate(today)
@@ -46,17 +58,26 @@ const getMinDate = () => {
     return formatDate(next)
 }
 
-// Components
-const CalendarGrid = ({ currentMonth, selectedDate, onDateClick, onPrevMonth, onNextMonth }: {
-    currentMonth: Date; selectedDate: string; onDateClick: (day: number) => void
-    onPrevMonth: () => void; onNextMonth: () => void
-}) => {
+interface CalendarGridProps {
+    currentMonth: Date
+    selectedDate: string
+    onDateClick: (day: number) => void
+    onPrevMonth: () => void
+    onNextMonth: () => void
+}
+
+const CalendarGrid = ({ currentMonth, selectedDate, onDateClick, onPrevMonth, onNextMonth }: CalendarGridProps) => {
     const calendarDays = useMemo(() => {
-        const days = []
+        const days: (number | null)[] = []
         for (let i = 0; i < getFirstDayOfMonth(currentMonth); i++) days.push(null)
         for (let i = 1; i <= getDaysInMonth(currentMonth); i++) days.push(i)
         return days
     }, [currentMonth])
+
+    const minDateString = getMinDate()
+    const [minYear, minMonth, minDay] = minDateString.split("-").map(Number)
+    const minDate = new Date(minYear, minMonth - 1, minDay)
+    minDate.setHours(0, 0, 0, 0)
 
     return (
         <div>
@@ -111,9 +132,14 @@ const CalendarGrid = ({ currentMonth, selectedDate, onDateClick, onPrevMonth, on
     )
 }
 
-const TimeSlotSelector = ({ room, selectedSlot, onSlotChange, isWorkingDay }: {
-    room: RoomDetail; selectedSlot: string; onSlotChange: (slot: string) => void; isWorkingDay: boolean
-}) => {
+interface TimeSlotSelectorProps {
+    room: RoomDetail
+    selectedSlots: string[]
+    onSlotToggle: (slot: string) => void
+    isWorkingDay: boolean
+}
+
+const TimeSlotSelector = ({ room, selectedSlots, onSlotToggle, isWorkingDay }: TimeSlotSelectorProps) => {
     const slotsAvailable = isWorkingDay && room.availableSlots.length > 0
     return (
         <div>
@@ -123,9 +149,9 @@ const TimeSlotSelector = ({ room, selectedSlot, onSlotChange, isWorkingDay }: {
                     {room.availableSlots.map((slot) => (
                         <button
                             key={slot}
-                            onClick={() => onSlotChange(slot)}
+                            onClick={() => onSlotToggle(slot)}
                             className={`px-4 py-2 rounded-lg font-medium transition-all text-sm ${
-                                selectedSlot === slot ? "bg-blue-500 text-white" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
+                                selectedSlots.includes(slot) ? "bg-cyan-500 text-white border border-cyan-600" : "bg-white text-gray-700 border border-gray-300 hover:bg-gray-50"
                             }`}
                         >
                             {slot}
@@ -141,7 +167,11 @@ const TimeSlotSelector = ({ room, selectedSlot, onSlotChange, isWorkingDay }: {
     )
 }
 
-const RoomHeader = ({ room }: { room: RoomDetail }) => (
+interface RoomHeaderProps {
+    room: RoomDetail
+}
+
+const RoomHeader = ({ room }: RoomHeaderProps) => (
     <>
         <div>
             <h1 className={typography.h1}>{room.name}</h1>
@@ -194,8 +224,13 @@ export default function RoomDetailPage() {
     const [selectedDate, setSelectedDate] = useState(getMinDate())
     const [selectedSlot, setSelectedSlot] = useState("")
     const [currentMonth, setCurrentMonth] = useState(new Date(getMinDate()))
+    
+    // Form fields
+    const [borrowerName, setBorrowerName] = useState("")
+    const [phoneNumber, setPhoneNumber] = useState("")
+    const [selectedSlots, setSelectedSlots] = useState<string[]>([])
 
-    const room = { ...MOCK_ROOM, id: roomId }
+    const room: RoomDetail = { ...MOCK_ROOM, id: roomId }
     const { dayName, isSelectedDateWorkingDay } = useMemo(() => {
         if (!selectedDate) return { dayName: "", isSelectedDateWorkingDay: false }
         const [year, month, day] = selectedDate.split("-").map(Number)
@@ -203,7 +238,7 @@ export default function RoomDetailPage() {
         return { dayName: WEEKDAYS_FULL[dateObj.getDay()], isSelectedDateWorkingDay: isWorkingDay(dateObj) }
     }, [selectedDate])
 
-    const handleDateClick = (day: number) => {
+    const handleDateClick = (day: number): void => {
         const newDate = new Date(currentMonth.getFullYear(), currentMonth.getMonth(), day)
         newDate.setHours(0, 0, 0, 0)
         if (isWorkingDay(newDate)) {
@@ -212,16 +247,45 @@ export default function RoomDetailPage() {
         }
     }
 
-    const handleBook = async () => {
-        if (!selectedSlot || !isSelectedDateWorkingDay) {
-            alert("Please select a valid date and time slot")
+    const handleSlotToggle = (slot: string): void => {
+        setSelectedSlots(prev => 
+            prev.includes(slot) 
+                ? prev.filter(s => s !== slot)
+                : [...prev, slot]
+        )
+    }
+
+    const handleBook = async (): Promise<void> => {
+        if (selectedSlots.length === 0 || !isSelectedDateWorkingDay || !borrowerName.trim() || !phoneNumber.trim()) {
+            alert("Please fill in all required fields")
             return
         }
+        
+        if (phoneNumber.length < 10) {
+            alert("Please enter a valid phone number")
+            return
+        }
+
         setIsBooking(true)
         await new Promise((resolve) => setTimeout(resolve, 1000))
-        alert(`Room booked for ${selectedDate} ${selectedSlot}!`)
+        
+        const totalPrice = room.pricePerHour * selectedSlots.length
+        const bookingDetails = `
+Room Booking Confirmation:
+- Room: ${room.name}
+- Date: ${selectedDate}
+- Time Slots: ${selectedSlots.join(", ")}
+- Duration: ${selectedSlots.length} hour(s)
+- Borrower Name: ${borrowerName}
+- Phone Number: ${phoneNumber}
+- Total Price: Rp ${room.pricePerHour.toLocaleString()}
+        `
+        alert(bookingDetails)
+        
         setIsBooking(false)
-        setSelectedSlot("")
+        setSelectedSlots([])
+        setBorrowerName("")
+        setPhoneNumber("")
     }
 
     return (
@@ -272,20 +336,64 @@ export default function RoomDetailPage() {
 
                                     <TimeSlotSelector
                                         room={room}
-                                        selectedSlot={selectedSlot}
-                                        onSlotChange={setSelectedSlot}
+                                        selectedSlots={selectedSlots}
+                                        onSlotToggle={handleSlotToggle}
                                         isWorkingDay={isSelectedDateWorkingDay}
                                     />
-
-                                    <Button
-                                        onClick={handleBook}
-                                        disabled={isBooking || !selectedSlot || !isSelectedDateWorkingDay}
-                                        className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg disabled:cursor-not-allowed transition-all"
-                                    >
-                                        {isBooking ? "Booking..." : selectedSlot ? `Book for ${selectedDate}` : "Select Time to Book"}
-                                    </Button>
                                 </div>
                             </div>
+                        </div>
+
+                        {/* Borrower Information Form */}
+                        <div className="bg-white p-6 rounded-lg border border-gray-200 space-y-6">
+                            <h3 className="font-semibold text-gray-900 text-lg">Borrower Information</h3>
+
+                            {/* Borrower Name */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                    <User className="w-4 h-4" />
+                                    Borrower Name <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="text"
+                                    value={borrowerName}
+                                    onChange={(e) => setBorrowerName(e.target.value)}
+                                    placeholder="Enter your full name"
+                                    className="w-full px-4 py-2.5 border border-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent bg-white"
+                                />
+                            </div>
+
+                            {/* Phone Number */}
+                            <div>
+                                <label className="block text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
+                                    <Phone className="w-4 h-4" />
+                                    Phone Number <span className="text-red-500">*</span>
+                                </label>
+                                <input
+                                    type="tel"
+                                    value={phoneNumber}
+                                    onChange={(e) => setPhoneNumber(e.target.value)}
+                                    placeholder="Enter your phone number (e.g., 08123456789)"
+                                    className="w-full px-4 py-2.5 border border-slate-500 rounded-lg focus:outline-none focus:ring-2 focus:ring-cyan-500 focus:border-transparent bg-white"
+                                />
+                            </div>
+
+                            {/* Total Price */}
+                            <div className="bg-blue-50 p-4 rounded-lg border border-blue-200">
+                                <p className="text-sm text-gray-600 mb-1">Total Price</p>
+                                <p className="text-2xl font-bold text-blue-600">Rp {room.pricePerHour.toLocaleString()}</p>
+                                <p className="text-xs text-gray-500 mt-2">
+                                    Fixed price per room booking
+                                </p>
+                            </div>
+
+                            <Button
+                                onClick={handleBook}
+                                disabled={isBooking || selectedSlots.length === 0 || !isSelectedDateWorkingDay}
+                                className="w-full bg-cyan-500 hover:bg-cyan-600 disabled:bg-gray-400 text-white font-bold py-3 rounded-lg disabled:cursor-not-allowed transition-all"
+                            >
+                                {isBooking ? "Processing..." : selectedSlots.length > 0 ? "Complete Booking" : "Select Time Slots to Book"}
+                            </Button>
                         </div>
                     </div>
                 </div>
