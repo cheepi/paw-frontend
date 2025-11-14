@@ -1,6 +1,6 @@
 import { typography } from "@/styles/typography"
 import { colors } from "@/styles/colors"
-import { Facebook, Twitter, Instagram } from "lucide-react"
+// import { Facebook, Twitter, Instagram } from "lucide-react"
 
 export default function PublicFooter() {
   return (
