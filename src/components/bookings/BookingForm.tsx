@@ -1,5 +1,3 @@
-// src/components/bookings/BookingForm.tsx (Final Clean)
-
 "use client"
 
 import { useState } from 'react'
@@ -8,7 +6,7 @@ import { Input } from '@/components/ui/input'
 import { AlertCircle, Calendar, Clock } from 'lucide-react'
 
 interface BookingFormProps {
-  roomId: string // Biarkan saja jika ada komponen luar yang membutuhkannya untuk tipe data
+  roomId: string 
   onSubmit: (startDate: string, endDate: string) => Promise<void> 
 }
 
@@ -88,7 +86,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ roomId, onSubmit }) =>
       {/* Input Time Slots */}
       <div className="grid grid-cols-2 gap-3">
         <div>
-          {/* FIX: Hapus 'block' dari class label */}
           <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
             <Clock className="w-4 h-4" /> Start Time <span className="text-red-500">*</span>
           </label>
@@ -101,7 +98,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ roomId, onSubmit }) =>
           />
         </div>
         <div>
-          {/* FIX: Hapus 'block' dari class label */}
           <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
             <Clock className="w-4 h-4" /> End Time <span className="text-red-500">*</span>
           </label>
