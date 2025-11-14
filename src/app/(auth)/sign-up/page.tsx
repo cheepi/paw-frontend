@@ -9,14 +9,11 @@ import { AuthDivider } from "@/components/auth/auth-divider"
 import { GoogleButton } from "@/components/auth/google-button"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { useDispatch } from "react-redux"
-import { setTempEmail } from "@/lib/store/authSlice"
 import { User, Phone, Mail, Lock, CheckCircle } from "lucide-react"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function RegisterPage() {
-  const dispatch = useDispatch()
   const [username, setUsername] = useState("")
   const [phone, setPhone] = useState("")
   const [email, setEmail] = useState("")
@@ -55,9 +52,14 @@ export default function RegisterPage() {
         throw new Error(data.message || "Registrasi gagal. Silakan coba lagi.")
       }
 
-      dispatch(setTempEmail(email));
-
-      router.push("/otp?flow=register")
+      if (data.demoOtp) {
+        alert(`MODE DEMO (Email Gagal Terkirim):\nKode OTP Anda adalah: ${data.demoOtp}`);
+      } else {
+        alert("Registration initiated. Please check your email.");
+      }
+      
+      localStorage.setItem("registrationEmail", email);
+      router.push("/otp?flow=register");
 
     } catch (err: any) {
       setError(err.message)
@@ -68,7 +70,7 @@ export default function RegisterPage() {
 
   const handleGoogleSignUp = () => {
     setIsLoading(true)
-    window.location.href = `${API_URL}/api/auth/google` // <-- Gunakan path /api/auth/google
+    window.location.href = `${API_URL}/api/auth/google`
   }
 
   const isFormValid = username && phone && email && password && confirmPassword && password === confirmPassword
@@ -78,7 +80,6 @@ export default function RegisterPage() {
       <AuthHeader title="Create Account" />
 
       <div className="space-y-4">
-        {/* Username Input */}
         <div>
           <label className="block text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">Name</label>
           <div className="relative">
@@ -94,7 +95,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Phone Number Input */}
         <div>
           <label className="block text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">
             Phone Number
@@ -112,7 +112,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Email Input */}
         <div>
           <label className="block text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">
             Email Address
@@ -130,7 +129,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Password Input */}
         <div>
           <label className="block text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">Password</label>
           <div className="relative">
@@ -146,7 +144,6 @@ export default function RegisterPage() {
           </div>
         </div>
 
-        {/* Confirm Password Input */}
         <div>
           <label className="block text-xs font-semibold text-white/80 mb-2 uppercase tracking-wider">Confirm Password</label>
           <div className="relative">
@@ -169,33 +166,28 @@ export default function RegisterPage() {
           )}
         </div>
 
-        {/* Tampilkan Error di sini */}
         {error && (
           <p className="text-center text-red-400 text-sm">{error}</p>
         )}
 
-        {/* Register Button */}
         <form onSubmit={handleRegister}>
           <Button
             type="submit"
             disabled={isLoading || !isFormValid}
-            className="w-full mt-10 bg-gradient-to-r from-blue-500 via-cyan-400 hover:from-blue-600 hover:via-cyan-500 text-white font-bold py-3 px-8 text-lg rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-base"
+            className="w-full mt-10 bg-gradient-to-r from-blue-500 via-cyan-400 hover:from-blue-600 hover:via-cyan-500 text-white font-bold py-3 px-8 text-lg rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {isLoading ? "Processing..." : "Create Account"}
           </Button>
         </form>
 
-        {/* Divider */}
         <AuthDivider />
 
-        {/* Google Sign-Up Button */}
         <GoogleButton 
           disabled={isLoading} 
           onClick={handleGoogleSignUp} 
           isLoading={isLoading} 
         />
 
-        {/* Login Link */}
         <p className="text-center text-sm text-white/70 font-medium">
           Already have an account?{" "}
           <a href="/sign-in" className="text-white font-semibold hover:text-white/80 transition-colors">

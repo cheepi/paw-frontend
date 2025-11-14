@@ -3,8 +3,6 @@
 import type React from "react"
 import { useState } from "react"
 import { useRouter } from "next/navigation"
-import { useDispatch } from "react-redux"
-import { setTempEmail } from '@/lib/store/authSlice'
 import { AuthLayout } from "@/components/auth/auth-layout"
 import { AuthHeader } from "@/components/auth/auth-header"
 import { AuthDivider } from "@/components/auth/auth-divider"
@@ -16,7 +14,6 @@ const API_URL = process.env.NEXT_PUBLIC_API_URL
 
 export default function LoginPage() {
   const router = useRouter()
-  const dispatch = useDispatch()
   const [email, setEmail] = useState("")
   const [password, setPassword] = useState("")
   const [isLoading, setIsLoading] = useState(false)
@@ -40,10 +37,14 @@ export default function LoginPage() {
         throw new Error(data.message || "Login gagal. Periksa email atau password.")
       }
 
-      dispatch(setTempEmail(email))
-
-      alert("Login berhasil. Silakan cek email Anda untuk kode OTP.")
-      router.push("/otp?flow=login")
+      if (data.demoOtp) {
+        alert(`MODE DEMO (Email Gagal Terkirim):\nKode OTP Anda adalah: ${data.demoOtp}`);
+      } else {
+        alert("Login credentials verified. Please check your email.");
+      }
+      
+      localStorage.setItem("loginEmail", email);
+      router.push("/otp?flow=login");
 
     } catch (err: any) {
       setError(err.message || "Login gagal. Silakan coba lagi.")
@@ -61,7 +62,6 @@ export default function LoginPage() {
     <AuthLayout>
       <AuthHeader title="Welcome Back" />
 
-      {/* pake gap 10px persis */}
       <form onSubmit={handleLogin} className="flex flex-col gap-[10px]">
         <div>
           <label className="text-sm font-semibold text-white/80 block mb-2">Email Address</label>

@@ -8,9 +8,9 @@ import { AuthHeader } from "@/components/auth/auth-header"
 import { Button } from "@/components/ui/button"
 import { InputOTP, InputOTPGroup, InputOTPSlot } from "@/components/ui/input-otp"
 import { setAuthToken } from "@/lib/auth"
-import { useSelector, useDispatch } from "react-redux"
-import { RootState } from "@/lib/store/store"
-import { clearTempEmail } from "@/lib/store/authSlice"
+// import { useSelector, useDispatch } from "react-redux"
+// import { RootState } from "@/lib/store/store"
+// import { clearTempEmail } from "@/lib/store/authSlice"
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL
 
@@ -20,18 +20,21 @@ export default function OtpClient() {
   const flow = searchParams.get("flow") || "register"
 
   const [otp, setOtp] = useState("")
-  const [email, setEmail] = useState("")
   const [isLoading, setIsLoading] = useState(false)
   const [isResending, setIsResending] = useState(false)
   const [error, setError] = useState("")
 
-  const dispatch = useDispatch()
-  const tempEmail = useSelector((state: RootState) => state.auth.tempEmail)
+  const [email, setEmail] = useState("")
+  const emailStorageKey = flow === "login" ? "loginEmail" : "registrationEmail"
 
   useEffect(() => {
-    if (tempEmail) setEmail(tempEmail)
-    else setError("Sesi tidak ditemukan. Silakan kembali ke halaman utama.")
-  }, [tempEmail])
+    const storedEmail = localStorage.getItem(emailStorageKey)
+    if (storedEmail) {
+      setEmail(storedEmail)
+    } else {
+      setError("Sesi tidak ditemukan. Silakan kembali ke halaman utama.")
+    }
+  }, [flow, emailStorageKey])
 
   const handleVerify = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -60,7 +63,8 @@ export default function OtpClient() {
       if (!response.ok) throw new Error(data.message || "Kode OTP tidak valid")
 
       setAuthToken(data.token)
-      dispatch(clearTempEmail())
+      localStorage.removeItem(emailStorageKey); // <-- PAKE INI
+      // dispatch(clearTempEmail()) // HAPUS
 
       alert("Verifikasi berhasil!")
       router.push("/dashboard")
@@ -74,6 +78,12 @@ export default function OtpClient() {
   const handleResend = async () => {
     setIsResending(true)
     setError("")
+
+    if (!email) {
+        setError("Email tidak ditemukan.")
+        setIsResending(false)
+        return
+    }
 
     const endpoint =
       flow === "login"
@@ -90,7 +100,13 @@ export default function OtpClient() {
       const data = await response.json()
       if (!response.ok) throw new Error(data.message || "Gagal mengirim ulang kode")
 
-      alert("Kode OTP baru telah dikirim.")
+      // ALERT FALLBACK DEMOOTP 
+      if (data.demoOtp) {
+          alert(`MODE DEMO (Email Gagal Terkirim):\nKode OTP BARU Anda adalah: ${data.demoOtp}`);
+      } else {
+          alert("Kode OTP baru telah 'dikirim'.");
+      }
+
     } catch (err: any) {
       setError(err.message || "Gagal mengirim ulang kode.")
     } finally {
@@ -124,19 +140,27 @@ export default function OtpClient() {
             <InputOTP maxLength={6} value={otp} onChange={setOtp}>
               <InputOTPGroup className="gap-3">
                 {Array.from({ length: 6 }).map((_, index) => (
-                  <InputOTPSlot key={index} index={index} className="h-12 w-12" />
+                  <InputOTPSlot
+                    key={index}
+                    index={index}
+                    // --- BALIKIN STYLING YANG BENER ---
+                    className="h-12 w-12 border border-white/20 bg-white/[0.05] rounded-lg text-lg font-semibold text-white 
+                              placeholder:text-white/40 focus:outline-none focus:ring-2 focus:ring-blue-400/50 
+                              focus:border-blue-400 focus:bg-white/[0.08] transition-all duration-200 
+                              backdrop-blur-sm text-center"
+                  />
                 ))}
               </InputOTPGroup>
             </InputOTP>
           </div>
 
-          {error && <p className="text-center text-red-400">{error}</p>}
+          {error && <p className="text-center text-red-400 text-sm">{error}</p>}
 
           <form onSubmit={handleVerify}>
             <Button
               type="submit"
               disabled={isLoading || otp.length !== 6 || !email}
-              className="w-full"
+              className="w-full bg-gradient-to-r from-blue-500 via-cyan-400 to-green-500 hover:from-blue-600 hover:via-cyan-500 hover:to-green-600 text-white font-bold py-3 rounded-lg transition-all duration-200 active:scale-95 disabled:opacity-50 disabled:cursor-not-allowed text-base"
             >
               {isLoading ? "Verifying..." : "Verify Code"}
             </Button>
@@ -146,7 +170,7 @@ export default function OtpClient() {
             <button
               onClick={handleResend}
               disabled={isResending || !email}
-              className="text-white"
+              className="text-white font-semibold hover:text-white/80 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
             >
               {isResending ? "Resending..." : "Resend OTP"}
             </button>
