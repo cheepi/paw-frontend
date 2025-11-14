@@ -1,42 +1,49 @@
 "use client";
 
-import { Button } from "@/components/ui/button";
+import { motion } from "framer-motion";
 import Link from "next/link";
+import { Button } from "@/components/ui/button";
+import { colors } from "@/styles/colors";
 
 export default function HeroSection() {
   return (
-    <section className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900 flex items-center justify-center px-4 sm:px-6 lg:px-8 pt-24">
-      <div className="max-w-7xl mx-auto w-full grid grid-cols-1 lg:grid-cols-2 gap-8 lg:gap-16 items-center">
-        {/* Left Content */}
-        <div className="space-y-6 sm:space-y-8">
-          <div className="space-y-4">
-            <h1 className="text-3xl sm:text-4xl md:text-5xl lg:text-6xl font-bold text-white leading-tight">
-              Selamat Datang di
-              <span className="bg-gradient-to-r from-cyan-400 to-blue-500 bg-clip-text text-transparent block">
-                Perpustakaan Naratama
-              </span>
-            </h1>
-            <p className="text-sm sm:text-base md:text-lg text-white/70 leading-relaxed max-w-md">
-              Platform terpadu untuk peminjaman buku, booking ruangan, manajemen anggota, dan notifikasi otomatis. Difasilitasi agar layanan perpustakaan lebih cepat, aman, dan nyaman.
-            </p>
-          </div>
-
-          <Button asChild className="w-full sm:w-auto bg-gradient-to-r from-blue-500 to-cyan-400 hover:from-blue-600 hover:to-cyan-500 text-white font-bold py-3 sm:py-4 px-6 sm:px-8 rounded-lg transition-all duration-200">
-            <Link href="/sign-up">
-              Join Now, Gratis!
-            </Link>
+    <div 
+      className="relative w-full h-screen flex items-center justify-center overflow-hidden"
+      style={{ background: colors.authBg }} // Pake background auth lu yg keren
+    >
+      {/* Konten di Tengah */}
+      <div className="relative z-10 text-center p-4">
+        <motion.h1
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.2 }}
+          className="text-5xl md:text-7xl font-bold text-white mb-6"
+        >
+          Selamat Datang di
+          <br />
+          <span className="text-cyan-400">Perpustakaan Naratama</span>
+        </motion.h1>
+        
+        <motion.p
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.4 }}
+          className="text-lg md:text-xl text-white/80 max-w-2xl mx-auto mb-10"
+        >
+          Platform terpadu untuk peminjaman buku, booking ruangan, manajemen anggota, dan notifikasi otomatis. 
+          Dirancang agar layanan perpustakaan lebih cepat, akurat, dan nyaman.
+        </motion.p>
+        
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.6, delay: 0.6 }}
+        >
+          <Button asChild size="lg" variant="primary" className="bg-gradient-to-r from-blue-500 via-cyan-400 hover:from-blue-600 hover:via-cyan-500 text-white font-bold py-4 px-8 text-lg rounded-lg transition-all duration-200 active:scale-95">
+            <Link href="/sign-up">Join Now, Gratis!</Link>
           </Button>
-        </div>
-
-        {/* Right Image */}
-        <div className="hidden lg:flex items-center justify-center">
-          <img 
-            src="/hero-illustration.png" 
-            alt="Naratama" 
-            className="w-full max-w-md lg:max-w-lg"
-          />
-        </div>
+        </motion.div>
       </div>
-    </section>
-  )
+    </div>
+  );
 }

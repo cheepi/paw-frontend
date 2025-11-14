@@ -38,22 +38,6 @@ export default function PublicFooter() {
                 <li><a href="/sign-up" className="hover:text-white transition-colors text-sm">Create Account</a></li>
               </ul>
             </div>
-            
-            {/* Follow Us */}
-            <div className="space-y-3">
-              <h4 className="font-semibold text-white uppercase tracking-wider text-sm mb-4">Follow Us</h4>
-              <div className="flex space-x-4">
-                <a href="#" aria-label="Facebook" className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors">
-                  <Facebook className="w-4 h-4 text-white" />
-                </a>
-                <a href="#" aria-label="Twitter" className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors">
-                  <Twitter className="w-4 h-4 text-white" />
-                </a>
-                <a href="#" aria-label="Instagram" className="w-8 h-8 bg-slate-700 hover:bg-slate-600 rounded-full flex items-center justify-center transition-colors">
-                  <Instagram className="w-4 h-4 text-white" />
-                </a>
-              </div>
-            </div>
           </div>
           
         </div>
