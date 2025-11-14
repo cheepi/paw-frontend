@@ -16,7 +16,7 @@ export default function PublicFooter() {
             <div className="flex items-center gap-3">
               <img src="/logo.png" alt="Naratama" className="h-10 w-auto bg-white rounded-md p-1" />
               <span className={`${typography.h4} font-bold`} style={{ color: "white" }}>
-                Perpustakaan Naratama
+                Digital Library
               </span>
             </div>
             <p 
