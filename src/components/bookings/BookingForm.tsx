@@ -6,11 +6,11 @@ import { Input } from '@/components/ui/input'
 import { AlertCircle, Calendar, Clock } from 'lucide-react'
 
 interface BookingFormProps {
-  roomId: string 
+  roomId: string // leave it like this
   onSubmit: (startDate: string, endDate: string) => Promise<void> 
 }
 
-export const BookingForm: React.FC<BookingFormProps> = ({ roomId, onSubmit }) => {
+export const BookingForm: React.FC<BookingFormProps> = ({ onSubmit, roomId: _roomId }) => { 
   const [date, setDate] = useState('')
   const [startTime, setStartTime] = useState('')
   const [endTime, setEndTime] = useState('')
@@ -70,7 +70,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ roomId, onSubmit }) =>
 
       {/* Input Date */}
       <div>
-        {/* FIX: Hapus 'block' dari class label */}
         <label className="text-sm font-semibold text-gray-900 mb-2 flex items-center gap-2">
             <Calendar className="w-4 h-4" /> Date <span className="text-red-500">*</span>
         </label>
@@ -111,7 +110,6 @@ export const BookingForm: React.FC<BookingFormProps> = ({ roomId, onSubmit }) =>
         </div>
       </div>
 
-      {/* FIX PROP NAME: loading=isLoading */}
       <Button type="submit" variant="primary" size="lg" loading={isLoading}> 
         Book Room
       </Button>
