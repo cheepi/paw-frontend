@@ -5,8 +5,9 @@ import { usePathname } from "next/navigation";
 import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
-    Users, Book, ArrowLeft, DoorOpen, Box, Hourglass,
-    Menu, X, UserCog, LayoutDashboard, LucideIcon
+    Users, Book, DoorOpen, Box, Hourglass,
+    Menu, X, UserCog, LayoutDashboard, LucideIcon,
+    LogOutIcon, ChevronRight, ChevronLeft
 } from "lucide-react";
 
 interface LinkType {
@@ -27,20 +28,23 @@ const adminNavs: LinkType[] = [
 interface NavItemProps {
     link: LinkType;
     isActive: (href: string) => boolean;
+    isCollapsed: boolean;
 }
 
-function NavItem({ link, isActive }: NavItemProps) {
+function NavItem({ link, isActive, isCollapsed }: NavItemProps) {
     const Icon = link.icon;
     return (
         <Link
             href={link.href}
-            title={link.label}
-            className={`flex items-center gap-3 p-3 rounded-xl font-medium transition-colors hover:shadow-md ${
-                isActive(link.href) ? "bg-black/40 text-white shadow-lg" : "text-black/60 hover:bg-black/10 hover:text-black"
+            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                isActive(link.href) 
+                    ? "bg-[#1a7b93] text-white shadow-lg" 
+                    : "text-slate-600 hover:bg-slate-100 hover:text-slate-900"
             }`}
+            title={isCollapsed ? link.label : ""}
         >
-            <Icon className="w-6 h-6 flex-shrink-0" />
-            <span className="whitespace-nowrap">{link.label}</span>
+            <Icon className="w-5 h-5 flex-shrink-0" />
+            {!isCollapsed && <span className="text-sm whitespace-nowrap">{link.label}</span>}
         </Link>
     );
 }
@@ -48,83 +52,129 @@ function NavItem({ link, isActive }: NavItemProps) {
 export default function AdminSidebar() {
     const pathname = usePathname();
     const isActive = useCallback((href: string) => pathname.startsWith(href), [pathname]);
-    const [isOpen, setIsOpen] = useState(false);
-    const [position, setPosition] = useState({ x: 20, y: 20 });
-    const [isDragging, setIsDragging] = useState(false);
+    const [isCollapsed, setIsCollapsed] = useState(false);
+    const [isMobileOpen, setIsMobileOpen] = useState(false);
 
     return (
-        <AnimatePresence>
-            <motion.div
-                drag
-                dragMomentum={false}
-                onDragStart={() => setIsDragging(true)}
-                onDragEnd={() => setTimeout(() => setIsDragging(false), 50)}
-                onDrag={(_, info) => setPosition({ x: info.point.x, y: info.point.y })}
-                style={{ x: position.x, y: position.y }}
-                className="fixed z-50"
-            >
-                {!isOpen && (
-                    <div className="relative group">
-                        <motion.button
-                            initial={{ scale: 0 }}
-                            animate={{ scale: 1 }}
-                            exit={{ scale: 0 }}
-                            onClick={() => { if (!isDragging) setIsOpen(true) }}
-                            className="w-14 h-14 flex items-center justify-center rounded-full bg-white/10 backdrop-blur-md text-white shadow-lg cursor-grab active:cursor-grabbing"
-                            whileHover={{ scale: 1.1 }}
-                            whileTap={{ scale: 0.95 }}
-                        >
-                            <Menu className="w-6 h-6 text-black/70" />
-                        </motion.button>
-                        
-                        {/* Tooltip "Drag me!" */}
-                        <div className="absolute left-full ml-3 top-1/2 -translate-y-1/2 px-3 py-1.5 bg-slate-900 text-white text-sm font-medium rounded-lg shadow-lg opacity-0 group-hover:opacity-100 transition-opacity duration-200 pointer-events-none whitespace-nowrap z-50">
-                            Drag me!
-                            {/* Arrow indicator */}
-                            <div className="absolute right-full top-1/2 -translate-y-1/2 border-4 border-transparent border-r-slate-900"></div>
+        <>
+            {/* Desktop Sidebar - Collapsible */}
+            <div className={`hidden lg:flex fixed left-0 top-0 h-screen bg-white border-r border-slate-200 z-40 flex-col transition-all duration-300 ${
+                isCollapsed ? "w-20" : "w-64"
+            }`}>
+                {/* Header dengan Toggle Button */}
+                <div className="flex items-center justify-between px-4 py-4 border-b border-slate-200">
+                    {!isCollapsed && (
+                        <div className="flex items-center gap-2">
+                            <UserCog className="w-6 h-6 text-[#1a7b93]" />
+                            <span className="text-lg font-bold text-[#1a7b93]">Admin</span>
                         </div>
-                    </div>
-                )}
-
-                {isOpen && (
-                    <motion.div
-                        initial={{ x: -200, opacity: 0 }}
-                        animate={{ x: 0, opacity: 1 }}
-                        exit={{ x: -200, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
-                        className="w-64 h-[65vh] flex flex-col p-4 bg-white/20 backdrop-blur border border-white/30 rounded-2xl shadow-2xl overflow-y-auto"
+                    )}
+                    <button
+                        onClick={() => setIsCollapsed(!isCollapsed)}
+                        className="p-1.5 hover:bg-slate-100 rounded-lg transition-colors"
+                        title={isCollapsed ? "Expand" : "Collapse"}
                     >
-                        <div className="flex items-center justify-between mb-4">
-                            <button 
-                                onClick={() => setIsOpen(false)}
-                                className="hover:bg-black/10 p-1 rounded-lg transition-colors"
-                            >
-                                <X className="w-6 h-6 text-black/70" />
-                            </button>
+                        {isCollapsed ? (
+                            <ChevronRight className="w-5 h-5 text-slate-600" />
+                        ) : (
+                            <ChevronLeft className="w-5 h-5 text-slate-600" />
+                        )}
+                    </button>
+                </div>
+
+                {/* Navigation */}
+                <nav className={`flex-1 px-3 py-6 space-y-2 overflow-y-auto ${
+                    isCollapsed ? "px-2" : ""
+                }`}>
+                    {adminNavs.map((link) => (
+                        <NavItem key={link.href} link={link} isActive={isActive} isCollapsed={isCollapsed} />
+                    ))}
+                </nav>
+
+                {/* Logout Button */}
+                <div className="px-3 py-4 border-t border-slate-200 bg-white">
+                    <Link
+                        href="/dashboard"
+                        className={`flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium text-sm w-full ${
+                            isCollapsed ? "justify-center" : ""
+                        }`}
+                        title={isCollapsed ? "Logout" : ""}
+                    >
+                        <LogOutIcon className="w-5 h-5 flex-shrink-0" />
+                        {!isCollapsed && <span>Logout</span>}
+                    </Link>
+                </div>
+            </div>
+
+            {/* Mobile Sidebar Toggle */}
+            <button
+                onClick={() => setIsMobileOpen(!isMobileOpen)}
+                className="lg:hidden fixed top-4 left-4 z-40 p-2 bg-white border border-slate-200 rounded-lg hover:bg-slate-100 transition-colors"
+            >
+                {isMobileOpen ? (
+                    <X className="w-6 h-6 text-slate-600" />
+                ) : (
+                    <Menu className="w-6 h-6 text-slate-600" />
+                )}
+            </button>
+
+            {/* Mobile Sidebar Overlay */}
+            <AnimatePresence>
+                {isMobileOpen && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        onClick={() => setIsMobileOpen(false)}
+                        className="lg:hidden fixed inset-0 bg-black/50 z-30"
+                    />
+                )}
+            </AnimatePresence>
+
+            {/* Mobile Sidebar */}
+            <AnimatePresence>
+                {isMobileOpen && (
+                    <motion.div
+                        initial={{ x: -280 }}
+                        animate={{ x: 0 }}
+                        exit={{ x: -280 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                        className="lg:hidden fixed left-0 top-0 w-64 h-screen bg-white z-40 flex flex-col shadow-xl"
+                    >
+                        {/* Header */}
+                        <div className="flex items-center justify-between px-6 py-4 border-b border-slate-200">
                             <div className="flex items-center gap-2">
-                                <UserCog className="w-8 h-8 text-black" />
-                                <span className="text-xl font-bold text-black/70">Admin</span>
+                                <UserCog className="w-6 h-6 text-[#1a7b93]" />
+                                <span className="text-lg font-bold text-[#1a7b93]">Admin</span>
                             </div>
+                            <button
+                                onClick={() => setIsMobileOpen(false)}
+                                className="p-1.5 hover:bg-slate-100 rounded-lg"
+                            >
+                                <X className="w-5 h-5 text-slate-600" />
+                            </button>
                         </div>
 
-                        <nav className="flex flex-col gap-2">
+                        {/* Navigation */}
+                        <nav className="flex-1 px-4 py-6 space-y-2 overflow-y-auto">
                             {adminNavs.map((link) => (
-                                <NavItem key={link.href} link={link} isActive={isActive} />
+                                <NavItem key={link.href} link={link} isActive={isActive} isCollapsed={false} />
                             ))}
                         </nav>
 
-                        <div className="mt-auto">
+                        {/* Logout Button */}
+                        <div className="px-4 py-4 border-t border-slate-200">
                             <Link
                                 href="/dashboard"
-                                className="flex items-center gap-3 p-3 bg-white shadow-lg rounded-xl text-black hover:bg-red-500/90 hover:text-white transition-colors font-medium"
+                                className="flex items-center gap-3 px-4 py-3 bg-red-50 text-red-600 hover:bg-red-100 rounded-lg transition-colors font-medium text-sm"
                             >
-                                <ArrowLeft className="w-6 h-6" />
-                                <span>Keluar Admin</span>
+                                <LogOutIcon className="w-5 h-5" />
+                                <span>Logout</span>
                             </Link>
                         </div>
                     </motion.div>
                 )}
-            </motion.div>
-        </AnimatePresence>
+            </AnimatePresence>
+        </>
     );
 }

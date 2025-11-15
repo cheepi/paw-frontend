@@ -23,7 +23,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
 
         if (user.role !== "admin") {
           alert("Akses ditolak. Hanya untuk Admin.");
-          router.push("/dashboard"); // not admin, kick
+          router.push("/dashboard");
         } else {
           setIsAdmin(true); 
         }
@@ -50,11 +50,20 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
     return null; 
   }
 
-return (
+  return (
     <div className="flex h-screen overflow-hidden bg-slate-50">
-      <AdminSidebar /> 
-      <main className="flex-1 p-8 overflow-y-auto">
-        {children}
+      {/* Sidebar Fixed */}
+      <div className="fixed left-0 top-0 h-screen">
+        <AdminSidebar /> 
+      </div>
+
+      {/* Main Content - Offset by sidebar */}
+      <main className="flex-1 lg:ml-20 overflow-y-auto">
+        <div className="min-h-screen flex flex-col">
+          <div className="flex-1 px-6 sm:px-8 lg:px-12 py-8 max-w-7xl w-full mx-auto">
+            {children}
+          </div>
+        </div>
       </main>
     </div>
   );

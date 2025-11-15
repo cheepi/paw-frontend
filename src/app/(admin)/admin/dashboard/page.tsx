@@ -2,6 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { getAuthToken } from "@/lib/auth";
 import { 
   Loader2, Users, Book, Box, 
@@ -84,7 +85,16 @@ export default function AdminDashboardPage() {
 
   return (
     <div>
-      <h1 className="text-3xl font-bold mb-8">Admin Dashboard</h1>
+      <div className="flex items-center gap-3 mb-8">
+        <Image
+          src="/logo(min).png"
+          alt="Naratama Logo"
+          width={40}
+          height={40}
+          className="object-contain"
+        />
+        <h1 className="text-3xl font-bold">Admin Dashboard</h1>
+      </div>
       
       {isLoading ? (
         <div className="flex items-center">
@@ -97,7 +107,7 @@ export default function AdminDashboardPage() {
             <StatCard 
               title="Total Users" 
               value={stats?.users?.toString() ?? '...'} 
-              icon={<Users className="w-6 h-6 text-blue-500" />} // Ukuran ikon diperkecil
+              icon={<Users className="w-6 h-6 text-blue-500" />}
             />
           </Link>
           <Link href="/admin/books">
