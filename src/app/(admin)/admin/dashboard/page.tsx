@@ -2,7 +2,7 @@
 
 import { useEffect, useState, useMemo } from "react";
 import Link from "next/link";
-import Image from "next/image";
+// import Image from "next/image";
 import { getAuthToken } from "@/lib/auth";
 import { 
   Loader2, Users, Book, Box, 
