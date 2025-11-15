@@ -32,10 +32,12 @@ interface NavItemProps {
 }
 
 function NavItem({ link, isActive }: NavItemProps) {
+    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
     const Icon = link.icon;
     return (
         <Link
             href={link.href}
+            onClick={() => setIsOverlayOpen(false)}
             style={{
                 backgroundColor: isActive(link.href) ? colors.primary : "transparent",
                 color: isActive(link.href) ? "white" : colors.textSecondary,
@@ -54,6 +56,10 @@ export default function AdminSidebar() {
     const pathname = usePathname();
     const isActive = useCallback((href: string) => pathname.startsWith(href), [pathname]);
     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+
+    const handleNavClick = () => {
+        setIsOverlayOpen(false);
+    };
 
     return (
         <>
@@ -116,26 +122,24 @@ export default function AdminSidebar() {
                             borderRight: `1px solid ${colors.primary}40`,
                         }}
                     >
-                        {/* Close Button */}
-                        <div 
-                            className="flex items-center justify-between px-6 py-4 border-b"
-                            style={{
-                                borderColor: `${colors.primary}40`,
-                            }}
-                        >
-                            <span style={{ color: colors.primaryDark }} className=" font-bold">Menu</span>
-                            <button
-                                onClick={() => setIsOverlayOpen(false)}
-                                className="p-1.5 rounded-lg transition-colors text-primaryDark hover:text-red-500"
-                            >
-                                <X className="w-5 h-5" />
-                            </button>
-                        </div>
-
                         {/* Navigation */}
                         <nav className="flex-1 px-4 py-6 space-y-1 overflow-y-auto">
                             {adminNavs.map((link) => (
-                                <NavItem key={link.href} link={link} isActive={isActive} />
+                                <Link
+                                    key={link.href}
+                                    href={link.href}
+                                    onClick={handleNavClick}
+                                    style={{
+                                        backgroundColor: isActive(link.href) ? colors.primary : "transparent",
+                                        color: isActive(link.href) ? "white" : colors.textSecondary,
+                                    }}
+                                    className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+                                        !isActive(link.href) ? "hover:bg-white/10" : ""
+                                    }`}
+                                >
+                                    <link.icon className="w-5 h-5 flex-shrink-0" />
+                                    <span className="text-sm">{link.label}</span>
+                                </Link>
                             ))}
                         </nav>
 
@@ -148,6 +152,7 @@ export default function AdminSidebar() {
                         >
                             <Link
                                 href="/dashboard"
+                                onClick={handleNavClick}
                                 className="flex items-center justify-center gap-3 px-4 py-3 text-white rounded-lg transition-colors font-medium text-sm w-full hover:opacity-80"
                                 style={{
                                     backgroundColor: colors.danger,
