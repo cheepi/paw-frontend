@@ -52,10 +52,8 @@ export default function AdminSidebar() {
     const [position, setPosition] = useState({ x: 20, y: 20 });
     const [isDragging, setIsDragging] = useState(false);
     
-    // ✅ REF untuk detect click outside
     const sidebarRef = useRef<HTMLDivElement>(null);
 
-    // ✅ CLOSE sidebar kalo klik di luar
     useEffect(() => {
         function handleClickOutside(event: MouseEvent) {
             if (isOpen && sidebarRef.current && !sidebarRef.current.contains(event.target as Node)) {
@@ -75,7 +73,7 @@ export default function AdminSidebar() {
     return (
         <AnimatePresence>
             <motion.div
-                ref={sidebarRef} // ✅ Attach ref
+                ref={sidebarRef} 
                 drag
                 dragMomentum={false}
                 onDragStart={() => setIsDragging(true)}
