@@ -2,7 +2,7 @@
 
 import React, { useEffect, useState, useMemo } from "react";
 import { getAuthToken } from "@/lib/auth";
-import { Loader2, CheckCircle, Clock, RotateCcw, Search, Filter } from "lucide-react";
+import { Loader2, CheckCircle, Clock, RotateCcw, Search, Filter, X } from "lucide-react";
 import type { Loan } from "@/types";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -18,9 +18,9 @@ import { colors } from "@/styles/colors";
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
 const statusConfig = {
-  borrowed: { color: "text-cyan-800", icon: Clock, label: "Borrowed" },
-  returned: { color: "text-green-800", icon: CheckCircle, label: "Returned" },
-  late: { color: "text-red-800", icon: CheckCircle /* icon fallback */, label: "LATE (Fine)" },
+  borrowed: { color: colors.warning, icon: Clock, label: "Borrowed" },
+  returned: { color: colors.success, icon: CheckCircle, label: "Returned" },
+  late: { color: colors.danger, icon: CheckCircle, label: "LATE (Fine)" },
 };
 
 const filterOptions = [
@@ -41,7 +41,6 @@ const calculateBorrowedAt = (dueDateString?: string | null): Date | null => {
   }
 };
 
-// helper: kembalikan date objek yang valid buat sorting/tampilan
 const getBorrowDate = (loan: Loan): Date => {
   try {
     if (loan.borrowDate) {
@@ -51,11 +50,9 @@ const getBorrowDate = (loan: Loan): Date => {
     const calc = calculateBorrowedAt((loan as any).dueDate);
     if (calc) return calc;
   } catch {}
-  // fallback paling tua supaya muncul paling bawah saat sort desc
   return new Date(0);
 };
 
-// safe formatter tanggal
 const formatDate = (input?: string | Date | null) => {
   if (!input) return "N/A";
   try {
@@ -72,7 +69,6 @@ export default function ManageLoansPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [filter, setFilter] = useState<string>("all");
   const [search, setSearch] = useState("");
-  const [showFilters, setShowFilters] = useState(false);
 
   const token = getAuthToken();
 
@@ -87,7 +83,6 @@ export default function ManageLoansPage() {
         return;
       }
       const data = await res.json();
-      // accept either array or { data: [] }
       const arr = Array.isArray(data) ? data : Array.isArray(data?.data) ? data.data : [];
       setLoans(arr);
     } catch (err) {
@@ -101,11 +96,10 @@ export default function ManageLoansPage() {
   useEffect(() => {
     if (token) fetchLoans();
     else setIsLoading(false);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [token]);
 
   const handleReturn = async (loanId: string) => {
-    if (!confirm("yakin mau 'force return' buku ini?")) return;
+    if (!confirm("Yakin mau 'Force Return' buku ini?")) return;
     try {
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
@@ -114,16 +108,21 @@ export default function ManageLoansPage() {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.message || "return failed");
       }
-      // refresh
       await fetchLoans();
-      alert("return processed");
+      alert("Return berhasil diproses");
     } catch (err: any) {
       console.error("handleReturn error:", err);
-      alert(err?.message || "failed to process return");
+      alert(err?.message || "Gagal memproses return");
     }
   };
 
-  // filtered + sorted (pakai fallback borrowedDate kalau backend ga ngirim borrowDate)
+  const handleClearFilters = () => {
+    setSearch("");
+    setFilter("all");
+  };
+
+  const hasActiveFilters = filter !== "all" || search !== "";
+
   const filteredLoans = useMemo(() => {
     const q = search.toLowerCase().trim();
     return loans
@@ -141,12 +140,13 @@ export default function ManageLoansPage() {
       .sort((a, b) => getBorrowDate(b).getTime() - getBorrowDate(a).getTime());
   }, [loans, filter, search]);
 
-  if (isLoading)
+  if (isLoading) {
     return (
       <div className="flex h-full items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin" />
+        <Loader2 className="w-8 h-8 animate-spin" style={{ color: colors.primary }} />
       </div>
     );
+  }
 
   return (
     <div>
@@ -156,67 +156,167 @@ export default function ManageLoansPage() {
         </h1>
       </div>
 
-      {/* search + filters */}
-      <div className="flex flex-col sm:flex-row sm:justify-between gap-4 mb-4">
-        <div className="relative flex-1 sm:flex-none sm:w-64">
-          <Search className="absolute z-0 left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-          <Input
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            placeholder="Cari nama buku atau email user..."
-            className="w-full pl-10 pr-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 text-sm"
-          />
-        </div>
+      {/* Search + Filters */}
+      <div className="py-6 space-y-4 mb-4">
+        <div className="flex items-center gap-2 sm:gap-3 flex-shrink-0 flex-wrap">
+          {/* Search bar */}
+          <div className="relative flex-1 min-w-0 sm:flex-auto">
+            <Search 
+              className="absolute left-3 top-1/2 transform -translate-y-1/2 w-5 h-5 flex-shrink-0" 
+              style={{ color: colors.textSecondary }}
+            />
+            <Input 
+              value={search} 
+              onChange={(e) => setSearch(e.target.value)} 
+              placeholder="Cari buku atau email user..." 
+              className="w-full sm:w-64 pl-10 pr-4 py-2.5 rounded-lg border transition-all focus:outline-none focus:ring-2 text-sm"
+              style={{
+                backgroundColor: colors.bgPrimary,
+                color: colors.textPrimary,
+                borderColor: colors.bgTertiary,
+              }}
+              onFocus={(e) => {
+                e.currentTarget.style.borderColor = colors.primary;
+                e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
+              }}
+              onBlur={(e) => {
+                e.currentTarget.style.borderColor = colors.bgTertiary;
+                e.currentTarget.style.boxShadow = "none";
+              }}
+            />
+          </div>
 
-        {/* pill group desktop */}
-        <div className="hidden sm:flex gap-2 flex-shrink-0">
-          {filterOptions.map((opt) => (
+          {/* Filter buttons desktop */}
+          <div className="hidden sm:flex gap-2 flex-shrink-0">
+            {filterOptions.map((opt) => (
+              <Button
+                key={opt.value}
+                onClick={() => setFilter(opt.value)}
+                className="px-3 py-1.5 rounded-md text-sm font-semibold transition-colors capitalize"
+                style={{
+                  backgroundColor: filter === opt.value ? colors.primary : colors.bgSecondary,
+                  color: filter === opt.value ? "white" : colors.textPrimary,
+                  borderColor: filter === opt.value ? colors.primary : colors.bgTertiary,
+                  borderWidth: "1px",
+                }}
+              >
+                {opt.label}
+              </Button>
+            ))}
+          </div>
+
+          {/* Filter dropdown mobile */}
+          <div className="sm:hidden w-full">
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button 
+                  className="w-full justify-center px-3 py-2.5 rounded-md text-sm font-semibold flex items-center gap-2 transition-all"
+                  style={{
+                    backgroundColor: colors.bgPrimary,
+                    color: colors.textSecondary,
+                    borderColor: colors.bgTertiary,
+                    borderWidth: "1px",
+                  }}
+                >
+                  <Filter className="w-4 h-4" />
+                  <span>Filter: {filterOptions.find((f) => f.value === filter)?.label || "All"}</span>
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent 
+                className="w-[calc(100vw-2rem)]"
+                style={{
+                  backgroundColor: colors.bgPrimary,
+                  borderColor: colors.bgTertiary,
+                }}
+              >
+                <DropdownMenuRadioGroup value={filter} onValueChange={(v) => setFilter(v)}>
+                  {filterOptions.map((opt) => (
+                    <DropdownMenuRadioItem 
+                      key={opt.value} 
+                      value={opt.value} 
+                      className="capitalize"
+                      style={{ color: colors.textPrimary }}
+                    >
+                      {opt.label}
+                    </DropdownMenuRadioItem>
+                  ))}
+                </DropdownMenuRadioGroup>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
+
+          {/* Clear button */}
+          {hasActiveFilters && (
             <Button
-              key={opt.value}
-              variant={filter === opt.value ? "primary" : "secondary"}
-              onClick={() => setFilter(opt.value)}
-              className={`px-3 py-1.5 rounded-md text-sm font-semibold transition-colors ${
-                filter === opt.value ? "bg-slate-900 text-white shadow-sm" : "bg-white text-slate-700 border border-slate-300 hover:bg-slate-50"
-              } capitalize`}
+              onClick={handleClearFilters}
+              className="px-3 py-2.5 rounded-lg font-semibold flex items-center justify-center gap-1 sm:gap-2 whitespace-nowrap transition-all text-sm"
+              style={{
+                backgroundColor: colors.bgPrimary,
+                color: colors.danger,
+                border: `1px solid ${colors.danger}40`,
+              }}
             >
-              {opt.label}
+              <X className="w-5 h-5 flex-shrink-0" />
+              <span className="hidden sm:inline">Clear</span>
             </Button>
           )}
         </div>
-
-        {/* dropdown mobile */}
-        <div className="sm:hidden w-full">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="secondary" className="w-full justify-center px-3 py-2.5 rounded-md text-sm font-semibold flex items-center gap-2">
-                <Filter className="w-4 h-4" />
-                <span>Filter: {filterOptions.find((f) => f.value === filter)?.label || "all"}</span>
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent className="w-[calc(100vw-2rem)]">
-              <DropdownMenuRadioGroup value={filter} onValueChange={(v) => setFilter(v)}>
-                {filterOptions.map((opt) => (
-                  <DropdownMenuRadioItem key={opt.value} value={opt.value} className="capitalize">
-                    {opt.label}
-                  </DropdownMenuRadioItem>
-                ))}
-              </DropdownMenuRadioGroup>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
+      {/* Table */}
+      <div 
+        className="rounded-lg border shadow-sm overflow-hidden"
+        style={{
+          backgroundColor: colors.bgPrimary,
+          borderColor: colors.bgTertiary,
+        }}
+      >
         <div className="overflow-x-auto">
           <table className="w-full min-w-[900px]">
-            <thead className="bg-slate-50 border-b">
+            <thead 
+              className="border-b"
+              style={{
+                backgroundColor: colors.bgSecondary,
+                borderColor: colors.bgTertiary,
+              }}
+            >
               <tr>
-                <th className="text-left p-4 font-semibold">Buku</th>
-                <th className="text-left p-4 font-semibold">User (E-mail)</th>
-                <th className="text-left p-4 font-semibold">Tanggal Pinjam</th>
-                <th className="text-left p-4 font-semibold">Jatuh Tempo</th>
-                <th className="text-left p-4 font-semibold">Status</th>
-                <th className="text-left p-4 font-semibold">Actions</th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Buku
+                </th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  User (Email)
+                </th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Tanggal Pinjam
+                </th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Jatuh Tempo
+                </th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Status
+                </th>
+                <th 
+                  className="text-left p-4 font-semibold"
+                  style={{ color: colors.textPrimary }}
+                >
+                  Actions
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -232,25 +332,63 @@ export default function ManageLoansPage() {
                   const borrowedDate = loan.borrowDate ? new Date(loan.borrowDate as any) : calculateBorrowedAt((loan as any).dueDate);
 
                   return (
-                    <tr key={loan._id || loan.id} className="border-b hover:bg-slate-50">
-                      <td className="p-4 align-top">{loan.book?.title || "buku dihapus"}</td>
-                      <td className="p-4 align-top text-sm">{loan.user?.email || "user dihapus"}</td>
-                      <td className="p-4 align-top">{formatDate(borrowedDate)}</td>
-                      <td className={`p-4 align-top ${isLate ? "text-red-600 font-bold" : ""}`}>
+                    <tr 
+                      key={loan._id || loan.id} 
+                      className="border-b transition-colors hover:opacity-80"
+                      style={{
+                        borderColor: colors.bgTertiary,
+                        backgroundColor: colors.bgPrimary,
+                      }}
+                    >
+                      <td 
+                        className="p-4 align-top"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {loan.book?.title || "Buku dihapus"}
+                      </td>
+                      <td 
+                        className="p-4 align-top text-sm"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {loan.user?.email || "User dihapus"}
+                      </td>
+                      <td 
+                        className="p-4 align-top"
+                        style={{ color: colors.textPrimary }}
+                      >
+                        {formatDate(borrowedDate)}
+                      </td>
+                      <td 
+                        className="p-4 align-top"
+                        style={{ color: isLate ? colors.danger : colors.textPrimary, fontWeight: isLate ? "bold" : "normal" }}
+                      >
                         {formatDate((loan as any).dueDate)}
                         {isLate && (loan as any).fineAmount ? (
-                          <span className="text-xs block">(denda: rp {(loan as any).fineAmount.toLocaleString("id-ID")})</span>
+                          <span className="text-xs block" style={{ color: colors.danger }}>
+                            (Denda: Rp {(loan as any).fineAmount.toLocaleString("id-ID")})
+                          </span>
                         ) : null}
                       </td>
                       <td className="p-4 align-top">
-                        <span className={`flex items-center gap-1.5 text-xs font-semibold ${statusInfo.color}`}>
+                        <span 
+                          className="flex items-center gap-1.5 text-xs font-semibold"
+                          style={{ color: statusInfo.color }}
+                        >
                           <StatusIcon className="w-4 h-4" />
                           {statusInfo.label}
                         </span>
                       </td>
                       <td className="p-4 align-top">
                         {isCancellable && (
-                          <button onClick={() => handleReturn(loan._id || loan.id)} className="text-blue-600 hover:text-blue-800" title="force return">
+                          <button 
+                            onClick={() => handleReturn(loan._id || loan.id)} 
+                            className="p-1.5 rounded-lg transition-colors hover:opacity-80"
+                            style={{
+                              backgroundColor: `${colors.info}15`,
+                              color: colors.info,
+                            }}
+                            title="Force Return"
+                          >
                             <RotateCcw className="w-5 h-5" />
                           </button>
                         )}
@@ -260,8 +398,12 @@ export default function ManageLoansPage() {
                 })
               ) : (
                 <tr>
-                  <td colSpan={6} className="text-center p-8 text-slate-500">
-                    tidak ada data pinjaman yang cocok.
+                  <td 
+                    colSpan={6} 
+                    className="text-center p-8"
+                    style={{ color: colors.textSecondary }}
+                  >
+                    Tidak ada data pinjaman yang cocok.
                   </td>
                 </tr>
               )}
