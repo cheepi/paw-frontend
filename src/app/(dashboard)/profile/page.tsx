@@ -86,7 +86,8 @@ export default function ProfilePage() {
                 })
                 const loansData = await loansRes.json() || []
 
-                const bookingsRes = await fetch(`${API_URL}/api/rooms/bookings/list`, {
+                const userIdToFilter = userJson._id || userJson.id;
+                const bookingsRes = await fetch(`${API_URL}/api/rooms/bookings/list?userId=${userIdToFilter}`, {
                     headers: { "Authorization": `Bearer ${token}` }
                 })
                 const bookingsData = await bookingsRes.json() || []
