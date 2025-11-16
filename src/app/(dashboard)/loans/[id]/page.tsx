@@ -211,6 +211,7 @@ export default function LoanDetailPage() {
     setError(null)
 
     try {
+      // 1. Return loan
       const response = await fetch(`${API_URL}/api/loans/${loan.id}/return`, {
         method: "POST",
         headers: {
@@ -234,6 +235,37 @@ export default function LoanDetailPage() {
       
       console.log("Return API response:", data)
       console.log("Returned loan:", returnedLoan) // Debug log
+      
+      const bookId = loan.book?.id || (loan.book as any)?._id
+      if (bookId) {
+        try {
+          const bookResponse = await fetch(`${API_URL}/api/books/${bookId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          })
+          
+          if (bookResponse.ok) {
+            const bookData = await bookResponse.json()
+            const currentBook = bookData.data || bookData
+            const currentStock = currentBook.stock || 0
+            
+            await fetch(`${API_URL}/api/books/${bookId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...currentBook,
+                stock: currentStock + 1
+              })
+            })
+            
+            console.log(`✅ Stock updated: ${currentStock} → ${currentStock + 1}`)
+          }
+        } catch (stockErr) {
+          console.error("⚠️ Failed to update stock:", stockErr)
+        }
+      }
       
       const refundStatus = returnedLoan?.refundStatus || loan.refundStatus
       const message = refundStatus === "refunded" 
@@ -335,24 +367,16 @@ export default function LoanDetailPage() {
                 </p>
               </div>
 
+              {/* harusnya kan admin doang ya yang bisa return, ya kali u */}
               <Button
                 onClick={handleReturn}
                 disabled={isReturning || !isButtonEnabled}
-                className={`w-full mt-4 py-3 text-white font-bold rounded-lg transition-all ${
+                className={`w-full mt-4 py-3 text-white font-bold rounded-lg transition-all hidden ${
                   isReturning ? "opacity-70 pointer-events-none" : actionButtonClass
                 }`}
               >
                 {isReturning ? "Processing..." : buttonText}
               </Button>
-              
-              {/* Debug info - remove in production */}
-              {/* <div className="mt-2 p-2 bg-gray-100 rounded text-xs space-y-1">
-                <p><strong>ID:</strong> {loan.id || "MISSING!"}</p>
-                <p><strong>_id:</strong> {(loan as any)._id || "N/A"}</p>
-                <p><strong>Status:</strong> {loan.status}</p>
-                <p><strong>Payment:</strong> {loan.paymentStatus}</p>
-                <p><strong>Button Enabled:</strong> {isButtonEnabled ? "Yes" : "No"}</p>
-              </div> */}
             </div>
           </div>
 

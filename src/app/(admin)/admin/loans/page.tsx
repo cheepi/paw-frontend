@@ -1,6 +1,18 @@
+// import {
+//   DropdownMenu,
+//   DropdownMenuContent,
+//   DropdownMenuRadioGroup,
+//   DropdownMenuRadioItem,
+//   DropdownMenuTrigger,
+// } from "@/components/ui/dropdown-menu";const filterOptions = [
+//   { label: "All", value: "all" },
+//   { label: "Borrowed", value: "borrowed" },
+//   { label: "Returned", value: "returned" },
+//   { label: "Late", value: "late" },
+// ];
 "use client";
 
-import React, { useEffect, useState, useMemo } from "react";
+import { useEffect, useState, useMemo } from "react";
 import { getAuthToken } from "@/lib/auth";
 import { Loader2, CheckCircle, Clock, RotateCcw, Search, Filter, X } from "lucide-react";
 import type { Loan } from "@/types";
@@ -87,14 +99,63 @@ export default function ManageLoansPage() {
 
   const handleReturn = async (loanId: string) => {
     if (!confirm("Yakin mau 'Force Return' buku ini?")) return;
+    
+    // Cari loan data dulu untuk dapetin book ID
+    const loan = loans.find(l => (l._id || l.id) === loanId);
+    if (!loan) {
+      alert("Loan data tidak ditemukan");
+      return;
+    }
+
     try {
       const headers: HeadersInit = { "Content-Type": "application/json" };
       if (token) headers["Authorization"] = `Bearer ${token}`;
-      const res = await fetch(`${API_URL}/api/loans/${loanId}/return`, { method: "POST", headers });
+      
+      // 1. Process return
+      const res = await fetch(`${API_URL}/api/loans/${loanId}/return`, { 
+        method: "POST", 
+        headers 
+      });
+      
       if (!res.ok) {
         const j = await res.json().catch(() => ({}));
         throw new Error(j?.message || "return failed");
       }
+
+      const bookId = loan.book?.id || (loan.book as any)?._id;
+      if (bookId) {
+        try {
+          // Ambil data buku dulu
+          const bookResponse = await fetch(`${API_URL}/api/books/${bookId}`, {
+            headers: { Authorization: `Bearer ${token}` }
+          });
+          
+          if (bookResponse.ok) {
+            const bookData = await bookResponse.json();
+            const currentBook = bookData.data || bookData;
+            const currentStock = currentBook.stock || 0;
+            
+            // Update stock +1
+            await fetch(`${API_URL}/api/books/${bookId}`, {
+              method: "PUT",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${token}`,
+              },
+              body: JSON.stringify({
+                ...currentBook,
+                stock: currentStock + 1
+              })
+            });
+            
+            console.log(`✅ Stock updated: ${currentStock} → ${currentStock + 1}`);
+          }
+        } catch (stockErr) {
+          console.error("⚠️ Failed to update stock:", stockErr);
+          // Jangan throw error, biar return tetap sukses
+        }
+      }
+
       await fetchLoans();
       alert("Return berhasil diproses");
     } catch (err: any) {
@@ -119,7 +180,9 @@ export default function ManageLoansPage() {
       })
       .filter((l) => {
         if (!q) return true;
-        return (
+        // const currentFilterLabel = filterOptions.find(opt => opt.value === filter)?.label || "Filter";
+
+  return (
           (l.book?.title || "").toLowerCase().includes(q) ||
           (l.user?.email || "").toLowerCase().includes(q)
         );
@@ -134,6 +197,8 @@ export default function ManageLoansPage() {
       </div>
     );
   }
+
+  // const currentFilterLabel = filterOptions.find(opt => opt.value === filter)?.label || "Filter";
 
   return (
     <div>
@@ -162,11 +227,11 @@ export default function ManageLoansPage() {
                 color: colors.textPrimary,
                 borderColor: colors.bgTertiary,
               }}
-              onFocus={(e) => {
+              onFocus={(e: any) => {
                 e.currentTarget.style.borderColor = colors.primary;
                 e.currentTarget.style.boxShadow = `0 0 0 2px ${colors.primary}20`;
               }}
-              onBlur={(e) => {
+              onBlur={(e: any) => {
                 e.currentTarget.style.borderColor = colors.bgTertiary;
                 e.currentTarget.style.boxShadow = "none";
               }}
@@ -243,7 +308,6 @@ export default function ManageLoansPage() {
         )}
       </div>
 
-      {/* Table */}
       <div 
         className="rounded-lg border shadow-sm overflow-hidden"
         style={{
