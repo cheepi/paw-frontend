@@ -367,7 +367,7 @@ export default function LoanDetailPage() {
                 </p>
               </div>
 
-              {/* harusnya kan admin doang ya yang bisa return, ya kali u */}
+              {/* harusnya kan admin doang ya yang bisa confirm return, ya kali user bisa */}
               <Button
                 onClick={handleReturn}
                 disabled={isReturning || !isButtonEnabled}
