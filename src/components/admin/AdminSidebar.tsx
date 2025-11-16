@@ -6,7 +6,9 @@ import { useState, useCallback } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { 
     Users, Book, DoorOpen, Box, Hourglass,
-    Menu, X, LayoutDashboard, LucideIcon,
+    Menu, 
+    // X, 
+    LayoutDashboard, LucideIcon,
     LogOutIcon
 } from "lucide-react";
 import { colors } from "@/styles/colors";
@@ -26,31 +28,31 @@ const adminNavs: LinkType[] = [
     { href: "/admin/loans", label: "Manage Loans", icon: Box },
 ];
 
-interface NavItemProps {
-    link: LinkType;
-    isActive: (href: string) => boolean;
-}
+// interface NavItemProps {
+//     link: LinkType;
+//     isActive: (href: string) => boolean;
+// }
 
-function NavItem({ link, isActive }: NavItemProps) {
-    const [isOverlayOpen, setIsOverlayOpen] = useState(false);
-    const Icon = link.icon;
-    return (
-        <Link
-            href={link.href}
-            onClick={() => setIsOverlayOpen(false)}
-            style={{
-                backgroundColor: isActive(link.href) ? colors.primary : "transparent",
-                color: isActive(link.href) ? "white" : colors.textSecondary,
-            }}
-            className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
-                !isActive(link.href) ? "hover:bg-white/10" : ""
-            }`}
-        >
-            <Icon className="w-5 h-5 flex-shrink-0" />
-            <span className="text-sm">{link.label}</span>
-        </Link>
-    );
-}
+// function NavItem({ link, isActive }: NavItemProps) {
+//     const [isOverlayOpen, setIsOverlayOpen] = useState(false);
+//     const Icon = link.icon;
+//     return (
+//         <Link
+//             href={link.href}
+//             onClick={() => setIsOverlayOpen(false)}
+//             style={{
+//                 backgroundColor: isActive(link.href) ? colors.primary : "transparent",
+//                 color: isActive(link.href) ? "white" : colors.textSecondary,
+//             }}
+//             className={`flex items-center gap-3 px-4 py-3 rounded-lg font-medium transition-all ${
+//                 !isActive(link.href) ? "hover:bg-white/10" : ""
+//             }`}
+//         >
+//             <Icon className="w-5 h-5 flex-shrink-0" />
+//             <span className="text-sm">{link.label}</span>
+//         </Link>
+//     );
+// }
 
 export default function AdminSidebar() {
     const pathname = usePathname();

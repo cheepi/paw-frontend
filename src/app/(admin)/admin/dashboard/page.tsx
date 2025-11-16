@@ -9,8 +9,8 @@ import {
   DoorOpen, Hourglass, AlarmClock, Send, CalendarCheck
 } from "lucide-react";
 import type { Loan, Room, Booking } from "@/types"; 
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+// import { Button } from "@/components/ui/button";
+// import { Input } from "@/components/ui/input";
 import { colors } from "@/styles/colors";
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;

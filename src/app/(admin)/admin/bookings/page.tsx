@@ -17,13 +17,13 @@ const statusConfig = {
   completed: { color: colors.textSecondary, icon: CheckCircle, label: 'Completed' },
 };
 
-const filterOptions = [
-  { label: "All", value: "all" },
-  { label: "Confirmed", value: "confirmed" },
-  { label: "Pending Payment", value: "pending_payment" },
-  { label: "Cancelled", value: "cancelled" },
-  { label: "Completed", value: "completed" },
-];
+// const filterOptions = [
+//   { label: "All", value: "all" },
+//   { label: "Confirmed", value: "confirmed" },
+//   { label: "Pending Payment", value: "pending_payment" },
+//   { label: "Cancelled", value: "cancelled" },
+//   { label: "Completed", value: "completed" },
+// ];
 
 const checkIfCompleted = (booking: Booking): boolean => {
     if (booking.status !== 'confirmed') return false;
